@@ -863,7 +863,7 @@ public sealed partial class HumanoidProfileEditor
     {
         target.AddChild(new Label
         {
-            Text = Loc.GetString("humanoid-profile-editor-threats-label"), 
+            Text = Loc.GetString("humanoid-profile-editor-threats-label"),
             Margin = new Thickness(6f, 4f, 0f, 6f),
             StyleClasses = { StyleNano.StyleClassCrtHeading },
         });
@@ -964,11 +964,11 @@ public sealed partial class HumanoidProfileEditor
         if (id.EndsWith("OnMarker", StringComparison.OrdinalIgnoreCase))
         {
             id = id[..^"OnMarker".Length];
-            suffix = " " + Loc.GetString("humanoid-profile-editor-threat-marker-suffix"); 
+            suffix = " " + Loc.GetString("humanoid-profile-editor-threat-marker-suffix");
         }
 
         if (id.EndsWith("CF", StringComparison.OrdinalIgnoreCase) ||
-            id.EndsWith("DS", StringComparison.OrdinalIgnoreCase)) 
+            id.EndsWith("DS", StringComparison.OrdinalIgnoreCase))
         {
             id = id[..^2];
         }
