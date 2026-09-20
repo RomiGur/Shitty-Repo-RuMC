@@ -5,6 +5,7 @@
   description: A square metal surface resting on four legs.
   components:
   - type: VehicleSmashable
+    selfDamageMultiplier: 0.01 # RuMC edit
   - type: Transform
     anchored: true
     gridTraversal: false

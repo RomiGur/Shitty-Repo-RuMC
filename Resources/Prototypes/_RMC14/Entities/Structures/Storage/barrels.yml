@@ -50,6 +50,7 @@
     instantDestroy: true
     passOnDestroy: true
   - type: VehicleSmashable
+    selfDamageMultiplier: 0.01 # RuMC edit
   - type: Sprite
     sprite: _RMC14/Structures/barrels.rsi
     noRot: true

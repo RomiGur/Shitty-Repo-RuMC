@@ -53,6 +53,7 @@
     - Wall
   components:
   - type: VehicleSmashable
+    selfDamageMultiplier: 0.25 # RuMC edit
   - type: MeleeSound
     soundGroups:
       Brute:
