@@ -7,3 +7,4 @@ cmu-platoon-hazops-name = РХБЗ США
 cmu-platoon-prodigysf-name = Служба безопасности «Продиджи»
 cmu-platoon-vaipo-name = Основная группа Vanguard's Arrow
 cmu-platoon-rmc-name = Имперский ударный корпус ИТМ
+cmu-platoon-bear-name = ЧВК «Медведь»
