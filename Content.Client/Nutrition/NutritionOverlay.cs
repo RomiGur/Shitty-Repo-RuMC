@@ -1,3 +1,4 @@
+using Content.Client._RuMC14.Eye; // RuMC edit
 using Content.Client.Nutrition.EntitySystems;
 using Content.Shared.Nutrition.Components;
 using Content.Shared.Nutrition.EntitySystems;
@@ -47,8 +48,13 @@ public sealed partial class NutritionOverlay : Overlay
         if (player == null)
             return false;
 
-        if (!_entityManager.TryGetComponent(player, out EyeComponent? eyeComp) || args.Viewport.Eye != eyeComp.Eye)
+        // RuMC edit start: ZEye on Z-level maps
+        if (!_entityManager.TryGetComponent(player, out EyeComponent? eyeComp) ||
+            !args.Viewport.Eye.IsPlayerView(eyeComp))
+        {
             return false;
+        }
+        // RuMC edit end
 
         if (!_entityManager.TryGetComponent(player, out SatiationComponent? satiation))
             return false;

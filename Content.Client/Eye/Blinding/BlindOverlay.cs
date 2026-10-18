@@ -1,3 +1,4 @@
+using Content.Client._RuMC14.Eye; // RuMC edit
 using Content.Client.Movement.Systems;
 using Robust.Client.Graphics;
 using Robust.Client.Player;
@@ -38,7 +39,7 @@ namespace Content.Client.Eye.Blinding
             if (!_entityManager.TryGetComponent(_playerManager.LocalSession?.AttachedEntity, out EyeComponent? eyeComp))
                 return false;
 
-            if (args.Viewport.Eye != eyeComp.Eye)
+            if (!args.Viewport.Eye.IsPlayerView(eyeComp)) // RuMC edit: ZEye on Z-level maps
                 return false;
 
             var playerEntity = _playerManager.LocalSession?.AttachedEntity;

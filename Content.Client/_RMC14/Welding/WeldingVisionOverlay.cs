@@ -1,3 +1,4 @@
+using Content.Client._RuMC14.Eye; // RuMC edit
 using Content.Shared._RMC14.Welding;
 using Content.Shared.Inventory;
 using Content.Shared.Item.ItemToggle.Components;
@@ -59,7 +60,7 @@ public sealed partial class WeldingVisionOverlay : Overlay
         if (!_entityManager.TryGetComponent(local.Value, out EyeComponent? eyeComp))
             return false;
 
-        if (args.Viewport.Eye != eyeComp.Eye)
+        if (!args.Viewport.Eye.IsPlayerView(eyeComp)) // RuMC edit: ZEye on Z-level maps
             return false;
 
         _isSuperior = false;

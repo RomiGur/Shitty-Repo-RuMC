@@ -1,3 +1,4 @@
+using Content.Client._RuMC14.Eye; // RuMC edit
 using Content.Shared.CCVar;
 using Content.Shared.Drugs;
 using Content.Shared.StatusEffectNew;
@@ -82,7 +83,7 @@ public sealed partial class RainbowOverlay : Overlay
         if (!_entityManager.TryGetComponent(_playerManager.LocalEntity, out EyeComponent? eyeComp))
             return false;
 
-        if (args.Viewport.Eye != eyeComp.Eye)
+        if (!args.Viewport.Eye.IsPlayerView(eyeComp)) // RuMC edit: ZEye on Z-level maps
             return false;
 
         return EffectScale > 0;
