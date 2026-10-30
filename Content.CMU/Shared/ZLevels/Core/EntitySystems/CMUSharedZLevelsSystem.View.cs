@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using Content.Shared._RuMC14.ZLevels.Vehicle; // RuMC edit
 using Content.Shared.CMU14.ZLevels.Core.Components;
 using Content.Shared._RMC14.Xenonids.Construction.Nest;
 using Content.Shared.Actions;
@@ -13,6 +14,7 @@ namespace Content.Shared.CMU14.ZLevels.Core.EntitySystems;
 public abstract partial class CMUSharedZLevelsSystem
 {
     [Dependency] protected ITileDefinitionManager TilDefMan = default!;
+    [Dependency] private RuMCVehicleZViewSystem _vehicleView = default!; // RuMC edit
 
     private readonly List<(Vector2 Center, float Distance)> _distanceOpeningCandidates = new();
     private readonly List<Entity<MapGridComponent>> _openingGridScratch = new();
@@ -91,7 +93,7 @@ public abstract partial class CMUSharedZLevelsSystem
         }
 
         // Faint -> full look up (original gates apply; on failure we stay in faint mode).
-        if (HasOpaqueAbove(ent))
+        if (HasOpaqueAbove(_vehicleView.GetViewSource(ent))) // RuMC edit: crew check the ceiling above the hull
         {
             _popup.PopupEntity(Loc.GetString("cmu-zlevel-look-up-fail"), ent, ent, PopupType.SmallCaution);
             return;
@@ -116,6 +118,34 @@ public abstract partial class CMUSharedZLevelsSystem
 
         viewer.LookUp = false;
         DirtyField(uid, viewer, nameof(CMUZLevelViewerComponent.LookUp));
+        return true;
+    }
+
+    // RuMC edit start: local-only, never dirtied
+    public void SetLocalView(Entity<CMUZLevelViewerComponent> ent, bool lookUp, bool faintUp)
+    {
+        ent.Comp.LookUp = lookUp;
+        ent.Comp.FaintUp = faintUp;
+    }
+    // RuMC edit end
+    /// <summary>
+    /// CMU14: ends the whole look up cycle - full mode and the faint upper ghost - for a viewer whose level is changing
+    /// under it. The faint ghost is otherwise a latched preference the renderer suppresses under a ceiling, but a
+    /// crossing that the player did not ask for (a Yautja leap aimed with look up, arriving on another deck) must not
+    /// leave the upper level ghosted over the level they end up on.
+    /// </summary>
+    public bool EndLookUpCycle(EntityUid uid)
+    {
+        if (!TryComp<CMUZLevelViewerComponent>(uid, out var viewer) ||
+            (!viewer.LookUp && !viewer.FaintUp))
+        {
+            return false;
+        }
+
+        viewer.LookUp = false;
+        viewer.FaintUp = false;
+        DirtyField(uid, viewer, nameof(CMUZLevelViewerComponent.LookUp));
+        DirtyField(uid, viewer, nameof(CMUZLevelViewerComponent.FaintUp));
         return true;
     }
 
@@ -365,8 +395,15 @@ public abstract partial class CMUSharedZLevelsSystem
     /// True when a cross-z shot from <paramref name="from"/> to <paramref name="to"/> crosses no floor
     /// tiles on <paramref name="map"/>, including floors on child grids such as dropship cabins.
     /// </summary>
-    public bool IsZShotPathOpen(EntityUid map, Vector2 from, Vector2 to)
+    public bool IsZShotPathOpen(EntityUid map, Vector2 from, Vector2 to, EntityUid? supportingMap = null)
     {
+        // An empty upper tile can still be supported by a wall on the lower map. Such shots
+        // must use the opening search to clear the wall before creating the projectile below.
+        if (supportingMap is { } below &&
+            _map.TryFindGridAt(below, from, out var supportGrid, out var support) &&
+            HasWallAt(supportGrid, support, _map.WorldToTile(supportGrid, support, from)))
+            return false;
+
         if (_gridQuery.TryComp(map, out var mapGrid) && !IsGridPathOpen((map, mapGrid)))
             return false;
 
