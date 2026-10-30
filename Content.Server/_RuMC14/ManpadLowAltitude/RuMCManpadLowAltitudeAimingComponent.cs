@@ -1,7 +1,7 @@
-namespace Content.Server._RuMC14.ManpadGunship;
+namespace Content.Server._RuMC14.ManpadLowAltitude;
 
 [RegisterComponent, UnsavedComponent]
-public sealed partial class RuMCManpadGunshipAimingComponent : Component
+public sealed partial class RuMCManpadLowAltitudeAimingComponent : Component
 {
     public EntityUid? Target;
     public TimeSpan NextScan;

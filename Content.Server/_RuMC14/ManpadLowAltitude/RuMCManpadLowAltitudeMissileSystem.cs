@@ -1,9 +1,9 @@
 using System.Numerics;
 using Content.Server.Administration.Logs;
 using Content.Server.CMU14.Dropship.Integrity;
-using Content.Shared._RuMC14.ManpadGunship;
+using Content.Shared._RMC14.Vehicle;
+using Content.Shared._RuMC14.ManpadLowAltitude;
 using Content.Shared.CMU14.Dropship.Integrity;
-using Content.Shared.CMU14.Dropship.TacticalLand;
 using Content.Shared.CMU14.Fighter;
 using Content.Shared.Database;
 using Content.Shared.Hands.Components;
@@ -18,10 +18,10 @@ using Robust.Shared.Random;
 using Robust.Shared.Spawners;
 using Robust.Shared.Timing;
 
-namespace Content.Server._RuMC14.ManpadGunship;
+namespace Content.Server._RuMC14.ManpadLowAltitude;
 
-/// <summary>Launches the missile and resolves the hit.</summary>
-public sealed partial class RuMCManpadGunshipMissileSystem : EntitySystem
+/// <summary>Launches the missile and resolves the hit on a gunship or a Blackfoot.</summary>
+public sealed partial class RuMCManpadLowAltitudeMissileSystem : EntitySystem
 {
     private static readonly EntProtoId LaunchVisual = "CMUFighterManpadLaunch";
 
@@ -32,28 +32,26 @@ public sealed partial class RuMCManpadGunshipMissileSystem : EntitySystem
     [Dependency] private FighterAudioSystem _fighterAudio = default!;
     [Dependency] private SharedGunSystem _gun = default!;
     [Dependency] private SharedHandsSystem _hands = default!;
+    [Dependency] private HardpointSystem _hardpoints = default!;
     [Dependency] private DropshipIntegritySystem _integrity = default!;
-    [Dependency] private RuMCManpadGunshipLockSystem _lock = default!;
+    [Dependency] private RuMCManpadLowAltitudeLockSystem _lock = default!;
     [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private RuMCManpadGunshipTargetingSystem _targeting = default!;
+    [Dependency] private RuMCManpadLowAltitudeTargetingSystem _targeting = default!;
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private SharedTransformSystem _transform = default!;
 
-    private EntityQuery<DropshipTacticalHoverComponent> _hoverQuery;
-
     public override void Initialize()
     {
-        _hoverQuery = GetEntityQuery<DropshipTacticalHoverComponent>();
-        SubscribeLocalEvent<RuMCManpadGunshipComponent, RuMCManpadGunshipLaunchRequestEvent>(OnLaunchRequested);
+        SubscribeLocalEvent<RuMCManpadLowAltitudeComponent, RuMCManpadLowAltitudeLaunchRequestEvent>(OnLaunchRequested);
     }
 
     private void OnLaunchRequested(
-        Entity<RuMCManpadGunshipComponent> launcher,
-        ref RuMCManpadGunshipLaunchRequestEvent args)
+        Entity<RuMCManpadLowAltitudeComponent> launcher,
+        ref RuMCManpadLowAltitudeLaunchRequestEvent args)
     {
         var xform = Transform(launcher);
         if (xform.MapUid is not { } map
-            || !TryComp(launcher, out RuMCManpadGunshipAimingComponent? aiming)
+            || !TryComp(launcher, out RuMCManpadLowAltitudeAimingComponent? aiming)
             || aiming.Target is not { } target
             || !_targeting.CanTrack(launcher, target)
             || !TryConsumeMissile(launcher, args.User))
@@ -73,20 +71,20 @@ public sealed partial class RuMCManpadGunshipMissileSystem : EntitySystem
             LogType.Action,
             LogImpact.Medium,
             $"{ToPrettyString(args.User):user} launched a missile from {ToPrettyString(launcher):launcher} " +
-            $"at gunship {ToPrettyString(target):target}");
+            $"at {launcher.Comp.TargetKind} {ToPrettyString(target):target}");
 
         _lock.ResetLock(launcher, aiming);
     }
 
     private EntityUid SpawnLaunchVisual(
-        RuMCManpadGunshipComponent launcher,
+        RuMCManpadLowAltitudeComponent launcher,
         EntityUid user,
         EntityUid target,
         EntityCoordinates launchSite,
         Vector2 origin)
     {
         var now = _timing.CurTime;
-        var hullCenter = _targeting.GetHullCenter(target);
+        var hullCenter = _targeting.GetTargetCenter(target);
         var toTarget = hullCenter - origin;
         var flightSeconds = (float) launcher.MissileFlightTime.TotalSeconds;
 
@@ -112,23 +110,22 @@ public sealed partial class RuMCManpadGunshipMissileSystem : EntitySystem
 
     private void AddMissile(
         EntityUid flight,
-        RuMCManpadGunshipComponent launcher,
+        RuMCManpadLowAltitudeComponent launcher,
         EntityUid user,
         EntityUid target)
     {
-        var missile = AddComp<RuMCManpadGunshipMissileComponent>(flight);
+        var missile = AddComp<RuMCManpadLowAltitudeMissileComponent>(flight);
         missile.Shooter = user;
         missile.Target = target;
         missile.ImpactAt = _timing.CurTime + launcher.MissileFlightTime;
-        missile.Damage = launcher.Damage;
-        missile.HitEffect = launcher.HitEffect;
-        missile.HitEffectCount = launcher.HitEffectCount;
-        missile.HitEffectSpread = launcher.HitEffectSpread;
+        missile.Hit = launcher.TargetKind == RuMCManpadLowAltitudeTargetKind.Blackfoot
+            ? launcher.BlackfootHit
+            : launcher.GunshipHit;
         missile.ImpactSound = launcher.ImpactSound;
         missile.SoundRange = launcher.SoundRange;
     }
 
-    private bool TryConsumeMissile(Entity<RuMCManpadGunshipComponent> launcher, EntityUid user)
+    private bool TryConsumeMissile(Entity<RuMCManpadLowAltitudeComponent> launcher, EntityUid user)
     {
         var take = new TakeAmmoEvent(1, [], Transform(launcher).Coordinates, user);
         RaiseLocalEvent(launcher, take);
@@ -161,7 +158,7 @@ public sealed partial class RuMCManpadGunshipMissileSystem : EntitySystem
     public override void Update(float frameTime)
     {
         var now = _timing.CurTime;
-        var query = EntityQueryEnumerator<RuMCManpadGunshipMissileComponent, TransformComponent>();
+        var query = EntityQueryEnumerator<RuMCManpadLowAltitudeMissileComponent, TransformComponent>();
         while (query.MoveNext(out var uid, out var missile, out var xform))
         {
             if (now < missile.ImpactAt)
@@ -169,47 +166,71 @@ public sealed partial class RuMCManpadGunshipMissileSystem : EntitySystem
 
             Impact(missile, xform.MapUid);
 
-            RemCompDeferred<RuMCManpadGunshipMissileComponent>(uid);
+            RemCompDeferred<RuMCManpadLowAltitudeMissileComponent>(uid);
         }
     }
 
-    private void Impact(RuMCManpadGunshipMissileComponent missile, EntityUid? shooterMap)
+    private void Impact(RuMCManpadLowAltitudeMissileComponent missile, EntityUid? shooterMap)
     {
-        if (!TryComp(missile.Target, out DropshipIntegrityComponent? integrity)
-            || !_hoverQuery.HasComp(missile.Target)
-            || integrity.Crashing
-            || integrity.Wrecked)
+        if (!_targeting.TryGetKind(missile.Target, out var kind)
+            || Transform(missile.Target).MapUid is not { } targetMap)
         {
             return;
         }
 
-        var shipXform = Transform(missile.Target);
-        if (shipXform.MapUid is not { } shipMap)
-            return;
+        switch (kind)
+        {
+            case RuMCManpadLowAltitudeTargetKind.Gunship:
+                DamageGunship(missile);
+                break;
+            case RuMCManpadLowAltitudeTargetKind.Blackfoot:
+                DamageBlackfoot(missile);
+                break;
+        }
 
-        _integrity.DamageIntegrity((missile.Target, integrity), missile.Damage);
+        SpawnImpactEffects(missile, targetMap, shooterMap);
+    }
+
+    private void DamageGunship(RuMCManpadLowAltitudeMissileComponent missile)
+    {
+        var integrity = Comp<DropshipIntegrityComponent>(missile.Target);
+        _integrity.DamageIntegrity((missile.Target, integrity), missile.Hit.Damage);
+        LogHit(missile, RuMCManpadLowAltitudeTargetKind.Gunship, missile.Hit.Damage);
+        _audio.PlayPvs(integrity.ImpactSound, missile.Target);
+    }
+
+    private void DamageBlackfoot(RuMCManpadLowAltitudeMissileComponent missile)
+    {
+        var dealt = _hardpoints.RuMCDamageVehicleHullExact(missile.Target, missile.Hit.Damage);
+        LogHit(missile, RuMCManpadLowAltitudeTargetKind.Blackfoot, dealt);
+    }
+
+    private void LogHit(RuMCManpadLowAltitudeMissileComponent missile, RuMCManpadLowAltitudeTargetKind kind, float damage)
+    {
         _adminLogger.Add(
             LogType.Damaged,
             LogImpact.High,
-            $"{ToPrettyString(missile.Shooter):user}'s missile hit gunship {ToPrettyString(missile.Target):target} " +
-            $"for {missile.Damage} hull damage");
+            $"{ToPrettyString(missile.Shooter):user}'s missile hit {kind} {ToPrettyString(missile.Target):target} " +
+            $"for {damage} hull damage");
+    }
 
-        var position = _targeting.GetHullCenter(missile.Target);
-        for (var i = 0; i < missile.HitEffectCount; i++)
+    private void SpawnImpactEffects(RuMCManpadLowAltitudeMissileComponent missile, EntityUid targetMap, EntityUid? shooterMap)
+    {
+        var position = _targeting.GetTargetCenter(missile.Target);
+        var hit = missile.Hit;
+        for (var i = 0; i < hit.EffectCount; i++)
         {
             var offset = new Vector2(
-                _random.NextFloat(-missile.HitEffectSpread, missile.HitEffectSpread),
-                _random.NextFloat(-missile.HitEffectSpread, missile.HitEffectSpread));
-            Spawn(missile.HitEffect, new EntityCoordinates(shipMap, position + offset));
+                _random.NextFloat(-hit.EffectSpread, hit.EffectSpread),
+                _random.NextFloat(-hit.EffectSpread, hit.EffectSpread));
+            Spawn(hit.Effect, new EntityCoordinates(targetMap, position + offset));
         }
 
-        if (missile.ImpactSound is { } sound)
-        {
-            _fighterAudio.PlayGround(sound, new EntityCoordinates(shipMap, position), missile.SoundRange, 0);
-            if (shooterMap is { } groundMap)
-                _fighterAudio.PlayGround(sound, new EntityCoordinates(groundMap, position), missile.SoundRange, 0);
-        }
+        if (missile.ImpactSound is not { } sound)
+            return;
 
-        _audio.PlayPvs(integrity.ImpactSound, missile.Target);
+        _fighterAudio.PlayGround(sound, new EntityCoordinates(targetMap, position), missile.SoundRange, 0);
+        if (shooterMap is { } groundMap)
+            _fighterAudio.PlayGround(sound, new EntityCoordinates(groundMap, position), missile.SoundRange, 0);
     }
 }
