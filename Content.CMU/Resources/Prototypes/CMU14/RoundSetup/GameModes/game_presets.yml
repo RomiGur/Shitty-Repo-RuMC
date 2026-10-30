@@ -4,7 +4,7 @@
   - colonyfall
   name: cmu-gamemode-colonyfall-name
   showInVote: true
-  maxPlayers: 45
+  maxPlayers: 60 # RuMC edit
   description: cmu-gamemode-colonyfall-desc
   burrowedLarvaEnabled: false
   thirdPartyAutoSpawn: true
@@ -16,6 +16,24 @@
   rules:
   - AuVoteRule
   - ColonyAntags
+
+# greenshift: colony life with no threat, no antags and no third parties, ends on the crew rotation transport. RuMC edit. 
+- type: gamePreset
+  id: ColonyShift
+  alias:
+  - colonyshift
+  - greenshift
+  name: cmu-gamemode-colonyshift-name
+  showInVote: true
+  maxPlayers: 20
+  minPlayers: 0
+  description: cmu-gamemode-colonyshift-desc
+  burrowedLarvaEnabled: false
+  supportedPlanets:
+  - SharedPlanetPool
+  rules:
+  - AuVoteRule
+  - ColonyRotation
 
 - type: gamePreset
   id: DistressSignal
