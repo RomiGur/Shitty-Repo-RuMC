@@ -90,7 +90,7 @@ public sealed class DocumentationPublisherTest
             count++;
         }
         Assert.That(count, Is.GreaterThan(65));
-        TestContext.WriteLine($"Read {count} project documents.");
+        TestContext.Out.WriteLine($"Read {count} project documents.");
     }
 
     [Test]
