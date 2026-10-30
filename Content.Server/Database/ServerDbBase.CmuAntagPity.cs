@@ -16,7 +16,7 @@ public abstract partial class ServerDbBase
         await using var db = await GetDb();
 
         // Entries idle since before the cutoff are dead weight; drop them on load.
-        await db.DbContext.Database.ExecuteSqlRawAsync(
+        await db.DbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM cmu_antag_pity WHERE last_seen < {pruneBefore}");
 
         var entries = await db.DbContext.Database
@@ -38,10 +38,13 @@ public abstract partial class ServerDbBase
 
         foreach (var entry in entries)
         {
-            await db.DbContext.Database.ExecuteSqlRawAsync(
-                $"INSERT INTO cmu_antag_pity (player_user_id, missed, last_seen) " +
-                $"VALUES ({entry.PlayerUserId}, {entry.Missed}, {entry.LastSeen}) " +
-                "ON CONFLICT (player_user_id) DO UPDATE SET missed = EXCLUDED.missed, last_seen = EXCLUDED.last_seen");
+            await db.DbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO cmu_antag_pity (player_user_id, missed, last_seen)
+                VALUES ({entry.PlayerUserId}, {entry.Missed}, {entry.LastSeen})
+                ON CONFLICT (player_user_id) DO UPDATE
+                SET missed = EXCLUDED.missed, last_seen = EXCLUDED.last_seen
+                """);
         }
 
         await tx.CommitAsync();
