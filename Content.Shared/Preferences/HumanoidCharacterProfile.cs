@@ -57,7 +57,7 @@ namespace Content.Shared.Preferences
         public const int MinWeight = 90;
         public const int MaxWeight = 300;
         public const int MinSyntheticGeneration = 1; // CMU14
-        public const int MaxSyntheticGeneration = 4; // CMU14
+        public const int MaxSyntheticGeneration = 3; // CMU14 and RuMC edit
         public const int SyntheticModelSuffixMaxLength = 12; // CMU14
 
         /// <summary>
@@ -1671,10 +1671,14 @@ namespace Content.Shared.Preferences
             }
 
             // Validate allegiance
-            if (Allegiance != null && !prototypeManager.HasIndex<AllegiancePrototype>(Allegiance.Value))
+            // cmu edit start: drop allegiances that can no longer be picked at round start
+            if (Allegiance != null &&
+                (!prototypeManager.TryIndex<AllegiancePrototype>(Allegiance.Value, out var allegiance) ||
+                 !allegiance.RoundStart))
             {
                 Allegiance = null;
             }
+            // cmu edit end
 
             // Validate origin
             if (Origin != null && !prototypeManager.HasIndex<OriginPrototype>(Origin.Value))
