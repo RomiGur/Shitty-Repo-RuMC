@@ -19317,5 +19317,30 @@ Entries:
   labels:
   - 'Changes: Translations'
   - M
+- author: PERed5
+  time: '2026-11-17T16:29:07Z'
+  changes:
+  - type: Tweak
+    message: Изменен вид правил. Теперь он по пунктам, а не по руководствам
+  - type: Fix
+    message: Ошибка парсера в "Порядок радиообмена"
+  id: 1142
+  url: https://github.com/flex5hybrid/RussianCM/pull/630
+  labels:
+  - 'Changes: No C#'
+  - L
+- author: RomiGur
+  time: '2026-11-17T19:03:09Z'
+  changes:
+  - type: Tweak
+    message: Противотанковая мина M19 больше не срабатывает от пехоты
+  - type: Fix
+    message: Противотанковая мина M19 теперь реагирует на технику. Убран повторный
+      клик, когда человек наступал на M19
+  id: 1143
+  url: https://github.com/flex5hybrid/RussianCM/pull/631
+  labels:
+  - 'Changes: Translations'
+  - S
 Name: CMU
 Order: -1
