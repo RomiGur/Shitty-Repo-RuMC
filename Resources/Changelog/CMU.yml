@@ -20090,5 +20090,56 @@ Entries:
   - 'Changes: No C#'
   - 'Changes: Translations'
   - M
+- author: ArturUr1
+  time: '2026-11-22T16:45:59Z'
+  changes:
+  - type: Tweak
+    message: Ксеноморф-угнетатель получил +1 к дистанции своего хука. Теперь это 7
+      тайлов вместо 6
+  - type: Tweak
+    message: Все ксеноморфы получили +5 единиц к противовзрывной броне, если таковая
+      у них была. Те, у кого её не было, прибавку не получили
+  - type: Tweak
+    message: Всем ксеноморфам увеличен урон с руки на 30%. Это не затрагивает шансы
+      делимбов и бронебойный урон ксеноморфов
+  - type: Tweak
+    message: Ксеноморфы, урон с руки которых после изменений оказался больше хвостового
+      урона, получили небольшую прибавку на 1-2 единицы к урону от хвоста
+  id: 1169
+  url: https://github.com/flex5hybrid/RussianCM/pull/640
+  labels:
+  - M
+- author: Undervunders
+  time: '2026-11-23T13:39:01Z'
+  changes:
+  - type: Tweak
+    message: Поменял цифру урона у ПЗРК с 800 --> 1000
+  - type: Tweak
+    message: Поменял цифру урона у бойлера по ганшипу с 800 --> 500
+  id: 1170
+  url: https://github.com/flex5hybrid/RussianCM/pull/643
+  labels:
+  - XS
+- author: ArturUr1
+  time: '2026-11-23T14:06:54Z'
+  changes:
+  - type: Tweak
+    message: Внутриигровое СОП командующего офицера приравнено к правилам его роли.
+      Теперь по СОП КО не имеет право на развертывание и выход в полевое командование
+  id: 1171
+  url: https://github.com/flex5hybrid/RussianCM/pull/641
+  labels:
+  - 'Changes: No C#'
+  - XS
+- author: RomiGur
+  time: '2026-11-23T15:05:55Z'
+  changes:
+  - type: Add
+    message: В технологии ИНСФОР добавлен вызов танка Бегемот и его экипажа
+  id: 1172
+  url: https://github.com/flex5hybrid/RussianCM/pull/644
+  labels:
+  - 'Changes: No C#'
+  - M
 Name: CMU
 Order: -1
